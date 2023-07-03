@@ -8,6 +8,8 @@ The 2105 module offers several advantages over its predecessor. It includes a Hi
 
 So what is so special about this console?
 
-When this console was released in the early 80's, it was known to have excellent sonic fidelity.  The frequency response is excellent and could go head-to-head with any of the Large Format Consoles of the day.  While the likes of Neve and SSL are busy catering to the more glamorous installations of the world, Soundcraft was busy taking good care of the more work-a-day professional 16/24-track market.  
+When this console was released in the early 80's, it was known to have excellent sonic fidelity.  The frequency response was excellent and could go head-to-head with any of the Large Format Consoles of the day.  While the likes of Neve and SSL are busy catering to the more glamorous installations of the world, Soundcraft was busy taking good care of the more work-a-day professional 16/24-track market.  
 
 The preamps were transformerless.  They were known to be extremely clean and had relatively flat frequency response for the time.  To me, it was very similar to the preamps found in the SSL 4K e-series.  
+
+The 2105 channel strip EQ was where this console shines.  It was the same design used in the Soundcraft 1600 consoles.  If you're not familiar with the 1600 Soundcraft, you may be familiar with how it sounds. Tom Petty Wild Flowers, and Mary Jane's Last Dance were mixed by Richard Dodd on one. U2 Angel of Harlem, Rick Rubin, Bob Dylan, and Dave Stewart favor them as well. They're a great British-sounding desk at a reasonable price, the mic pres and Eqs sound excellent. 
