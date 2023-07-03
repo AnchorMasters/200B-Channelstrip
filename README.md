@@ -1,3 +1,3 @@
 # 200B-Channelstrip
 
-This is a project that I've always wanted to tackle.  I have had this console since the early 2000's.  It has served me well.  I've used this as a summing console and as a front-end console while tracking.  Now, I have moved to more mastering and this console has turned into more of a museum piece as it gets less work then it had in prior years.  I wanted to create a plug-in version of this console so everyone could have access to this tool.  
+This is a project I've always wanted to undertake. I've owned this console since the early 2000s, and it has been a reliable companion throughout the years. Initially, I used it as a summing console and a front-end console for tracking. However, as my focus shifted more towards mastering, this console has become somewhat of a museum piece, seeing less action than before. That's why I'm determined to develop a plug-in version of this console, making it accessible to everyone as a valuable tool. 
