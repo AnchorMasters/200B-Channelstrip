@@ -1,0 +1,428 @@
+//This is a DSP emulation of the Soundcraft 200B found at Anchor Masters (https://anchormasters.com/).  This plug-in is based off channel one of the console which has a Soundcraft 2105 module.
+//Using DDMF's Plugin Doctor I was able to match the hardware channel's frequency response, filter curves, and harmonic signature (found at unity gain).  
+
+//RBJ filters were based off the algorithms of Thomas Scott Stillwell. Saturation used was based off Michael Gruhn Saturation algorithm.
+
+//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+//IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+//FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS 
+//BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+//(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+//PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+//STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF 
+//THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+desc:200B 2105 Channelstrip
+
+slider1:0<0,1,1{Off,On}>HPF
+slider2:0<-10,10,0.5>Low Shelf (dB)
+slider3:600<150,2400,1>LMF (Hz)
+slider4:0<-10,10,0.5>LMF (dB)
+slider5:2000<600,10000,1>HMF (Hz)
+slider6:0<-10,10,0.5>HMF (dB)
+slider7:0<-10,10,0.5>High Shelf (dB)
+slider8:0<-10,10,0.5>Gain (dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  ext_tail_size = -1;
+  ext_nodenorm = 1;
+//HPF//
+  hpf = 0;
+  gain1 = 0;
+  freq1 = 80;
+  a1 = 1;
+  s1 = 1;
+  q1 = 1 / (sqrt((a1 + 1/a1)*(1/s1 - 1) + 2));
+  w01 = 2 * $pi * freq1/srate;
+  cosw01 = cos(w01);
+  sinw01 = sin(w01);
+  alpha1 = sinw01 / (2 * q1);
+
+  b01 = (1 + cosw01)/2;
+  b11 = -(1 + cosw01);
+  b21 = (1 + cosw01)/2;
+  a01 = 1 + alpha1;
+  a11 = -2 * cosw01;
+  a21 = 1 - alpha1;
+  b01 /= a01;
+  b11 /= a01;
+  b21 /= a01;
+  a11 /= a01;
+  a21 /= a01;
+
+//LS//
+  gain3 = 0;
+  freq3 = 275;
+  a3 = 10^(gain3/40);
+  s3 = 0.5;
+  q3 = 1 / (sqrt((a3 + 1/a3)*(1/s3 - 1) + 2));
+  w03 = 2 * $pi * freq3/srate;
+  cosw03 = cos(w03);
+  sinw03 = sin(w03);
+  alpha3 = sinw03 / (2 * q3);
+
+  b03 = a3 * ((a3+1) - (a3-1)*cosw03 + 2*sqrt(a3)*alpha3);
+  b13 = 2 * a3 * ((a3-1) - (a3+1)*cosw03);
+  b23 = a3 * ((a3+1) - (a3-1)*cosw03 - 2*sqrt(a3)*alpha3);
+  a03 = (a3+1) + (a3-1)*cosw03 + 2*sqrt(a3)*alpha3;
+  a13 = -2 * ((a3-1) + (a3+1)*cosw03);
+  a23 = (a3+1)+(a3-1)*cosw03-2*sqrt(a3)*alpha3;
+  b03 /= a03;
+  b13 /= a03;
+  b23 /= a03;
+  a13 /= a03;
+  a23 /= a03;
+
+//LMF//
+gain4 = 0;
+  freq4 = 600;
+  q4 = 0.5;
+  a4 = 10^(gain4/40);
+  w04 = 2 * $pi * freq4/srate;
+  cosw04 = cos(w04);
+  sinw04 = sin(w04);
+  alpha4 = sinw04 / (2 * q4);
+
+  b04 = 1 + alpha4 * a4;
+  b14 = -2 * cosw04;
+  b24 = 1 - alpha4 * a4;
+  a04 = 1 + alpha4 / a4;
+  a14 = -2 * cosw04;
+  a24 = 1 - alpha4 / a4;
+  b04 /= a04;
+  b14 /= a04;
+  b24 /= a04;
+  a14 /= a04;
+  a24 /= a04;
+
+//HMF//
+  gain5 = 0;
+  freq5 = 2000;
+  q5 = 0.5;
+  a5 = 10^(gain5/40);
+  w05 = 2 * $pi * freq5/srate;
+  cosw05 = cos(w05);
+  sinw05 = sin(w05);
+  alpha5 = sinw05 / (2 * q5);
+
+  b05 = 1 + alpha5 * a5;
+  b15 = -2 * cosw05;
+  b25 = 1 - alpha5 * a5;
+  a05 = 1 + alpha5 / a5;
+  a15 = -2 * cosw05;
+  a25 = 1 - alpha5 / a5;
+  b05 /= a05;
+  b15 /= a05;
+  b25 /= a05;
+  a15 /= a05;
+  a25 /= a05;
+ 
+//HS//
+  gain7 = 0;
+  freq7 = 2750;
+  a7 = 10^(gain7/40);
+  s7 = 0.3;
+  q7 = 1 / (sqrt((a7 + 1/a7)*(1/s7 - 1) + 2));
+  w07 = 2 * $pi * freq7/srate;
+  cosw07 = cos(w07);
+  sinw07 = sin(w07);
+  alpha7 = sinw07 / (2 * q7);
+
+  b07 = a7 * ((a7+1) + (a7-1)*cosw07 + 2*sqrt(a7)*alpha7);
+  b17 = -2*a7*((a7-1) + (a7+1)*cosw07);
+  b27 = a7*((a7+1) + (a7-1)*cosw07 - 2*sqrt(a7)*alpha7);
+  a07 = (a7+1) - (a7-1)*cosw07 + 2*sqrt(a7)*alpha7;
+  a17 = 2*((a7-1) - (a7+1)*cosw07);
+  a27 = (a7+1)-(a7-1)*cosw07 - 2*sqrt(a7)*alpha7;
+  b07 /= a07;
+  b17 /= a07;
+  b27 /= a07;
+  a17 /= a07;
+  a27 /= a07;
+
+  gain = 1;
+
+
+@slider
+  
+  freq1 = (slider1 == 0 ? 80 : (slider1 == 1 ? 80));
+  gain3 = slider2;
+  freq4 = slider3;
+  gain4 = slider4;
+  freq5 = slider5;
+  gain5 = slider6;
+  gain7 = slider7;
+  gain = 10^(slider8/20);
+  slider1 == 0 ? hpf = 0 : hpf = 1;
+
+//HPF//
+  a1 = 1;
+  s1 = 1;
+  q1 = 1 / (sqrt((a1 + 1/a1)*(1/s1 - 1) + 2));
+  w01 = 2 * $pi * freq1/srate;
+  cosw01 = cos(w01);
+  sinw01 = sin(w01);
+  alpha1 = sinw01 / (2 * q1);
+
+  b01 = (1 + cosw01)/2;
+  b11 = -(1 + cosw01);
+  b21 = (1 + cosw01)/2;
+  a01 = 1 + alpha1;
+  a11 = -2 * cosw01;
+  a21 = 1 - alpha1;
+  b01 /= a01;
+  b11 /= a01;
+  b21 /= a01;
+  a11 /= a01;
+  a21 /= a01;
+
+//LS//
+  a3 = 10^(gain3/40);
+  s3 = 0.5;
+  q3 = 1 / (sqrt((a3 + 1/a3)*(1/s3 - 1) + 2));
+  w03 = 2 * $pi * 275/srate;
+  cosw03 = cos(w03);
+  sinw03 = sin(w03);
+  alpha3 = sinw03 / (2 * q3);
+
+  b03 = a3 * ((a3+1) - (a3-1)*cosw03 + 2*sqrt(a3)*alpha3);
+  b13 = 2 * a3 * ((a3-1) - (a3+1)*cosw03);
+  b23 = a3 * ((a3+1) - (a3-1)*cosw03 - 2*sqrt(a3)*alpha3);
+  a03 = (a3+1) + (a3-1)*cosw03 + 2*sqrt(a3)*alpha3;
+  a13 = -2 * ((a3-1) + (a3+1)*cosw03);
+  a23 = (a3+1)+(a3-1)*cosw03-2*sqrt(a3)*alpha3;
+  b03 /= a03;
+  b13 /= a03;
+  b23 /= a03;
+  a13 /= a03;
+  a23 /= a03;
+
+//LMF//
+ q4 = 0.5;
+  a4 = 10^(gain4/40);
+  w04 = 2 * $pi * freq4/srate;
+  cosw04 = cos(w04);
+  sinw04 = sin(w04);
+  alpha4 = sinw04 / (2 * q4);
+
+  b04 = 1 + alpha4 * a4;
+  b14 = -2 * cosw04;
+  b24 = 1 - alpha4 * a4;
+  a04 = 1 + alpha4 / a4;
+  a14 = -2 * cosw04;
+  a24 = 1 - alpha4 / a4;
+  b04 /= a04;
+  b14 /= a04;
+  b24 /= a04;
+  a14 /= a04;
+  a24 /= a04;
+
+//HMF//
+  q5 = 0.5;
+  a5 = 10^(gain5/40);
+  w05 = 2 * $pi * freq5/srate;
+  cosw05 = cos(w05);
+  sinw05 = sin(w05);
+  alpha5 = sinw05 / (2 * q5);
+
+  b05 = 1 + alpha5 * a5;
+  b15 = -2 * cosw05;
+  b25 = 1 - alpha5 * a5;
+  a05 = 1 + alpha5 / a5;
+  a15 = -2 * cosw05;
+  a25 = 1 - alpha5 / a5;
+  b05 /= a05;
+  b15 /= a05;
+  b25 /= a05;
+  a15 /= a05;
+  a25 /= a05;
+
+//HS//
+  a7 = 10^(gain7/40);
+  freq7 = 2750;
+  s7 = 0.58;
+  q7 = 1 / (sqrt((a7 + 1/a7)*(1/s7 - 1) + 2));
+  w07 = 2 * $pi * freq7/srate;
+  cosw07 = cos(w07);
+  sinw07 = sin(w07);
+  alpha7 = sinw07 / (2 * q7);
+
+  b07 = a7 * ((a7+1) + (a7-1)*cosw07 + 2*sqrt(a7)*alpha7);
+  b17 = -2*a7*((a7-1) + (a7+1)*cosw07);
+  b27 = a7*((a7+1) + (a7-1)*cosw07 - 2*sqrt(a7)*alpha7);
+  a07 = (a7+1) - (a7-1)*cosw07 + 2*sqrt(a7)*alpha7;
+  a17 = 2*((a7-1) - (a7+1)*cosw07);
+  a27 = (a7+1)-(a7-1)*cosw07 - 2*sqrt(a7)*alpha7;
+  b07 /= a07;
+  b17 /= a07;
+  b27 /= a07;
+  a17 /= a07;
+  a27 /= a07;
+
+  //THD//
+  hgain = 2^(-78/6)*2;
+  gc = 1/(1+hgain);
+  fc = 5;
+  k = exp(-2*$pi*fc/srate);
+  k0 = 1-k;
+  foo = 3.5/200*$pi;
+  bar = sin(3.5/200*$pi);
+
+  a8 = 10^(-0.3/40);
+  s8 = 0.5;
+  q8 = 1 / (sqrt((a8 + 1/a8)*(1/s8 - 1) + 2));
+  w08 = 2 * $pi * 17500/srate;
+  cosw08 = cos(w08);
+  sinw08 = sin(w08);
+  alpha8 = sinw08 / (2 * q8);
+
+  b08 = a8 * ((a8+1) + (a8-1)*cosw08 + 2*sqrt(a8)*alpha8);
+  b18 = -2*a8*((a8-1) + (a8+1)*cosw08);
+  b28 = a8*((a8+1) + (a8-1)*cosw08 - 2*sqrt(a8)*alpha8);
+  a08 = (a8+1) - (a8-1)*cosw08 + 2*sqrt(a8)*alpha8;
+  a18 = 2*((a8-1) - (a8+1)*cosw08);
+  a28 = (a8+1)-(a8-1)*cosw08 - 2*sqrt(a8)*alpha8;
+  b08 /= a08;
+  b18 /= a08;
+  b28 /= a08;
+  a18 /= a08;
+  a28 /= a08;
+
+@sample
+
+  //THD//
+  inl = spl0;
+  inr = spl1;
+  l2 = inl+(inl*inl*hgain);
+  r2 = inr+(inr*inr*hgain);
+  fc > 0 ?
+  (
+  finl = l2;
+  finr = r2;
+  foutl = k0*finl+k*foutl;
+  foutr = k0*finr+k*foutr;
+  outl = finl-foutl;
+  outr = finr-foutr;
+  ):(
+  outl = l2;
+  outr = r2;
+  );
+  spl0 = outl;
+  spl1 = outr;
+  bar ? (
+  spl0 = min(max( sin(max(min(spl0,1),-1)*foo)/bar ,-1) ,1);
+  spl1 = min(max( sin(max(min(spl1,1),-1)*foo)/bar ,-1) ,1);
+  );
+
+  ospl0 = spl0;
+  spl0 = b08 * spl0 + b18 * xl18 + b28 * xl28 - a18 * yl18 - a28 * yl28;
+  xl28 = xl18;
+  xl18 = ospl0;
+  yl28 = yl18;
+  yl18 = spl0;
+
+  ospl1 = spl1;
+  spl1 = b08 * spl1 + b18 * xr18 + b28 * xr28 - a18 * yr18 - a28 * yr28;
+  xr28 = xr18;
+  xr18 = ospl1;
+  yr28 = yr18;
+  yr18 = spl1;
+
+//HPF//
+  hpf != 0 ? (
+  ospl0 = spl0;
+  spl0 = b01 * spl0 + b11 * xl11 + b21 * xl21 - a11 * yl11 - a21 * yl21;
+  xl21 = xl11;
+  xl11 = ospl0;
+  yl21 = yl11;
+  yl11 = spl0 ;
+
+  ospl1 = spl1;
+  spl1 = b01 * spl1 + b11 * xr11 + b21 * xr21 - a11 * yr11 - a21 * yr21;
+  xr21 = xr11;
+  xr11 = ospl1;
+  yr21 = yr11;
+  yr11 = spl1 ;
+  );
+
+//LS//
+  gain3 != 0 ? (
+  ospl0 = spl0;
+  spl0 = b03 * spl0 + b13 * xl13 + b23 * xl23 - a13 * yl13 - a23 * yl23;
+  xl23 = xl13;
+  xl13 = ospl0;
+  yl23 = yl13;
+  yl13 = spl0;
+
+  ospl1 = spl1;
+  spl1 = b03 * spl1 + b13 * xr13 + b23 * xr23 - a13 * yr13 - a23 * yr23;
+  xr23 = xr13;
+  xr13 = ospl1;
+  yr23 = yr13;
+  yr13 = spl1;
+  );
+
+//LMF//
+  gain4 != 0 ? (
+  ospl0 = spl0;
+  spl0 = b04 * spl0 + b14 * xl14 + b24 * xl24 - a14 * yl14 - a24 * yl24;
+  xl24 = xl14;
+  xl14 = ospl0;
+  yl24 = yl14;
+  yl14 = spl0;
+
+  ospl1 = spl1;
+  spl1 = b04 * spl1 + b14 * xr14 + b24 * xr24 - a14 * yr14 - a24 * yr24;
+  xr24 = xr14;
+  xr14 = ospl1;
+  yr24 = yr14;
+  yr14 = spl1;
+  );
+
+//HMF//
+  gain5 != 0 ? (
+  ospl0 = spl0;
+  spl0 = b05 * spl0 + b15 * xl15 + b25 * xl25 - a15 * yl15 - a25 * yl25;
+  xl25 = xl15;
+  xl15 = ospl0;
+  yl25 = yl15;
+  yl15 = spl0;
+
+  ospl1 = spl1;
+  spl1 = b05 * spl1 + b15 * xr15 + b25 * xr25 - a15 * yr15 - a25 * yr25;
+  xr25 = xr15;
+  xr15 = ospl1;
+  yr25 = yr15;
+  yr15 = spl1;
+  );
+
+//HS//
+  gain7 != 0 ? (
+  ospl0 = spl0;
+  spl0 = b07 * spl0 + b17 * xl17 + b27 * xl27 - a17 * yl17 - a27 * yl27;
+  xl27 = xl17;
+  xl17 = ospl0;
+  yl27 = yl17;
+  yl17 = spl0;
+
+  ospl1 = spl1;
+  spl1 = b07 * spl1 + b17 * xr17 + b27 * xr27 - a17 * yr17 - a27 * yr27;
+  xr27 = xr17;
+  xr17 = ospl1;
+  yr27 = yr17;
+  yr17 = spl1;
+  );
+
+
+
+  spl0 *= gain;
+  spl1 *= gain;
+
+
+
