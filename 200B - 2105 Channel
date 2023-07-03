@@ -1,5 +1,5 @@
 //This is a DSP emulation of the Soundcraft 200B found at Anchor Masters (https://anchormasters.com/).  This plug-in is based off channel one of the console which has a Soundcraft 2105 module.
-//Using DDMF's Plugin Doctor I was able to match the hardware channel's frequency response, filter curves, and harmonic signature (found at unity gain).  
+//Using DDMF's Plugin Doctor I was able to match the hardware channel's frequency response, filter curves, and harmonic signature (at unity gain).  
 
 //RBJ filters were based off the algorithms of Thomas Scott Stillwell. Saturation used was based off Michael Gruhn Saturation algorithm.
 
