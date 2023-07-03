@@ -10,4 +10,4 @@ So what is so special about this console?
 
 When this console was released in the early 80's, it was known to have excellent sonic fidelity.  The frequency response is excellent and could go head-to-head with any of the Large Format Consoles of the day.  While the likes of Neve and SSL are busy catering to the more glamorous installations of the world, Soundcraft was busy taking good care of the more work-a-day professional 16/24-track market.  
 
-The preamps were transformerless.  They were known to be extremely clean at the time and provide a relatively flat frequency response over 20Hz to 20KHz.  To me, it was very similar to the preamps found in the SSL 4K e-series.  
+The preamps were transformerless.  They were known to be extremely clean and had relatively flat frequency response over 20Hz to 20KHz for the time.  To me, it was very similar to the preamps found in the SSL 4K e-series.  
