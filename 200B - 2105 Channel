@@ -16,13 +16,13 @@
 desc:200B 2105 Channelstrip
 
 slider1:0<0,1,1{Off,On}>HPF
-slider2:0<-10,10,0.5>Low Shelf (dB)
+slider2:0<-15,15,0.1>Low Shelf (dB)
 slider3:600<150,2400,1>LMF (Hz)
-slider4:0<-10,10,0.5>LMF (dB)
+slider4:0<-15,15,0.1>LMF (dB)
 slider5:2000<600,10000,1>HMF (Hz)
-slider6:0<-10,10,0.5>HMF (dB)
-slider7:0<-10,10,0.5>High Shelf (dB)
-slider8:0<-10,10,0.5>Gain (dB)
+slider6:0<-15,15,0.1>HMF (dB)
+slider7:0<-15,15,0.1>High Shelf (dB)
+slider8:0<-10,10,0.1>Gain (dB)
 
 in_pin:left input
 in_pin:right input
